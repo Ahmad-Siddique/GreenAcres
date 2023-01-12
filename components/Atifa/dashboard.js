@@ -1,14 +1,58 @@
  import * as React from 'react';
-import {Image, Text, View, StyleSheet } from 'react-native';
+import {Image, Text, View, StyleSheet,TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
+import {useEffect} from 'react'
 // You can import from local files
 
 
 // or any pure javascript modules available in npm
 import { Card } from 'react-native-paper';
 
-export default function App() {
+
+export default function App({navigation}) {
+
+  const SettingUserData = async () => {
+    try {
+         console.log('Entered try');
+      
+      setError(false);
+      const config = {
+        "Content-type": "application/json",
+      };
+
+      const {data} = await axios
+        .post(
+          'http://10.0.2.2:8000/users/api/login/',
+          {
+            username,
+            password,
+          },
+          config,
+        )
+        .then(data => {
+          console.log(data.data);
+          setError(false);
+          setsuccessfull(true);
+          AsyncStorage.setItem("token",data.data.token)
+          setsuccessfullmessage('Login Successful.. Redirecting');
+          navigation.navigate("TabUser")
+        })
+        .catch(err => {
+          // setError("Invalid Email or Password");
+          setsuccessfull(false);
+          setError(true);
+          setErrormessage('Invalid Username or Password');
+          console.log(err.message)
+          console.log('Noob');
+        });
+    } catch (error) {}
+  };
+  
+  useEffect(() => {
+    
+  })
+
+
   return (
     <View style={{backgroundColor: '#F1F2F0', marginBottom:30}}>
     <View style={{ margin: 50, }}>
@@ -17,7 +61,7 @@ export default function App() {
         <Text style={{fontSize: 18, fontWeight:'bold' }}>Help Us to Save the Mother Earth</Text>
         </View>
         
-        <View style={{
+        <TouchableOpacity style={{
             shadowColor: '#000',
             shadowOffset: {
               width: 0,
@@ -42,10 +86,10 @@ export default function App() {
             source={require('../../images/pic1.jpeg')}
           />
           <Text style={{fontWeight:"bold"}}>Identify Crops and fruits </Text>
-          </View>
+          </TouchableOpacity>
 
       
-       <View style={{
+       <TouchableOpacity onPress={()=>navigation.navigate('Plant Disease')} style={{
             shadowColor: '#000',
             shadowOffset: {
               width: 0,
@@ -70,9 +114,9 @@ export default function App() {
             source={require('../../images/pic2.jpeg')}
           />
           <Text style={{fontWeight:"bold"}}>Identify Disease</Text>
-          </View>
+          </TouchableOpacity>
 
-           <View style={{
+           <TouchableOpacity style={{
             shadowColor: '#000',
             shadowOffset: {
               width: 0,
@@ -97,7 +141,7 @@ export default function App() {
             source={require('../../images/pic3.jpeg')}
           />
           <Text style={{fontWeight:"bold"}}>Learn About Plants</Text>
-          </View>
+          </TouchableOpacity>
 
         
 

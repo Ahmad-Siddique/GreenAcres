@@ -10,15 +10,138 @@ import {
   TextInput,
 } from 'react-native';
 
+
 import Ionicons from 'react-native-vector-icons/Ionicons';
 // You can import from local files
+
+import {AsyncStorage} from 'react-native';
+import axios from 'axios';
 
 import {useState} from 'react';
 // or any pure javascript modules available in npm
 import {Card} from 'react-native-paper';
 import {NavigationContainer, DrawerActions} from '@react-navigation/native';
 
-function AdminLogin({navigation}) {
+function AdminLogin({ navigation }) {
+  
+  const [username, setusername] = useState("");
+  const [password, setpassword] = useState("");
+
+  const [successfull, setsuccessfull] = useState(false);
+  const [successfullmessage, setsuccessfullmessage] = useState("");
+  const [error, setError] = useState(false);
+  const [errormessage, setErrormessage] = useState("");
+
+  const LoginAuthetication = async () => {
+    if (username == "" || password == "") {
+      setError(true)
+      setErrormessage("Please Enter the credentials");
+    } else {
+      console.log('Entered else');
+      try {
+        console.log('Entered try');
+
+        setError(false);
+        const config = {
+          'Content-type': 'application/json',
+        };
+
+        const { data1 } = await axios
+          .post(
+            'http://10.0.2.2:8000/users/api/login/',
+            {
+              username,
+              password,
+            },
+            config,
+          )
+          .then(data => {
+            console.log(data.data);
+
+            // Second Request
+           
+
+           
+            ValidatingAdmin(data.data.token)
+            
+            
+          })
+              .catch(err => {
+                // setError("Invalid Email or Password");
+                setsuccessfull(false);
+                setError(true);
+                setErrormessage('Invalid Username or Password');
+                console.log(err.message);
+                console.log('Noob');
+                throw new Error(err.message)
+              });
+          }
+       catch (error) { }
+            
+    }
+  };
+
+const ValidatingAdmin = async (token) => {
+    try {
+      console.log('Entered try');
+      console.log(token)
+
+      setError(false);
+      const config = {
+        'Content-type': 'application/json',
+        headers: {
+          
+        
+          'Authorization': `token ${token}`
+        }
+      };
+
+       await axios
+        .get(
+          'http://10.0.2.2:8000/users/api/userdata/',
+
+          config,
+        )
+        .then(data => {
+          console.log(data.data);
+          if (data.data.is_superuser == true) {
+            setError(false);
+            setsuccessfull(true);
+           
+            SettingAsyncAdminData(data,token)
+            
+          } else {
+            setError(true);
+            setErrormessage('Entered Credentials are not of admin');
+          }
+        })
+        .catch(err => {
+          // setError("Invalid Email or Password");
+          setsuccessfull(false);
+          setError(true);
+          setErrormessage('Invalid Username or Password');
+          console.log(err.message);
+          console.log('Noob');
+          throw new Error(err.message)
+        });
+    } catch (error) {
+      console.log(error.message)
+    }
+  }
+
+  const SettingAsyncAdminData = async (data, token) => {
+    console.log(data.data, token)
+    console.log("Token datatype",typeof token)
+    await AsyncStorage.setItem('admintoken', JSON.stringify( token ));
+  await AsyncStorage.setItem('adminid', JSON.stringify(data.data.id));
+  await AsyncStorage.setItem('adminemail', JSON.stringify(data.data.email));
+    await AsyncStorage.setItem('adminusername', JSON.stringify(data.data.username));
+    setsuccessfullmessage('Login Successful.. Redirecting');
+    navigation.navigate('TabAdmin');
+}
+
+
+
   return (
     <SafeAreaView>
       <View
@@ -55,6 +178,17 @@ function AdminLogin({navigation}) {
             }}>
             ADMIN LOGIN
           </Text>
+          {successfull && (
+            <Text style={{color: 'green', textAlign: 'center'}}>
+              {successfullmessage}
+            </Text>
+          )}
+
+          {error && (
+            <Text style={{color: 'red', textAlign: 'center'}}>
+              {errormessage}
+            </Text>
+          )}
         </View>
         <View
           style={{
@@ -74,7 +208,7 @@ function AdminLogin({navigation}) {
           />
 
           <TextInput
-            placeholder="Enter your email"
+            placeholder="Enter username"
             style={{
               paddingBottom: 10,
               paddingLeft: 20,
@@ -88,6 +222,8 @@ function AdminLogin({navigation}) {
               fontWeight: 'bold',
               fontFamily: 'Lexend',
             }}
+            value={username}
+            onChangeText={setusername}
           />
         </View>
         <View
@@ -118,6 +254,8 @@ function AdminLogin({navigation}) {
               fontFamily: 'Lexend',
               textalign: 'center',
             }}
+            value={password}
+            onChangeText={setpassword}
           />
         </View>
 
@@ -137,7 +275,7 @@ function AdminLogin({navigation}) {
               height: 68,
               alignItems: 'center',
             }}
-            onPress={() => navigation.navigate('TabAdmin')}>
+            onPress={() => LoginAuthetication()}>
             <Text
               style={{
                 color: 'white',
